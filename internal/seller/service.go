@@ -14,10 +14,11 @@ var (
 type Service interface{
 	GetAll(ctx context.Context) ([]domain.Seller, error)
 	Get(ctx context.Context ,id int ) (domain.Seller, error)
-	//Exists(ctx context.Context, cid int) bool
 	Save(ctx context.Context,se domain.Seller) (domain.Seller, error)
-	Update(ctx context.Context,  se domain.Seller) ( domain.Seller, error)
+	Update(ctx context.Context,  se domain.Seller) error
 	Delete(ctx context.Context, id int) error
+	Exists(ctx context.Context, cid int) bool
+	
 }
 
 type service struct {
@@ -39,7 +40,6 @@ func (s *service) GetAll(ctx context.Context) ([]domain.Seller, error) {
 }
 
 func (s *service) Get(ctx context.Context, id int) (domain.Seller, error) {
-	 
 	p, err := s.repo.Get(ctx, id)
 	if err != nil {
 		return domain.Seller{}, err
@@ -64,28 +64,18 @@ func (s *service) Save(ctx context.Context, se domain.Seller) (domain.Seller, er
 	return se, nil
 }
 
-func (s *service) Update(ctx context.Context, se domain.Seller) (domain.Seller,  error) {
+func (s *service) Update(ctx context.Context, se domain.Seller)  error {
 
-	 err := s.repo.Update(ctx, se)
+	return s.repo.Update(ctx, se)
 
-	if err != nil {
-		return  domain.Seller{}, err
-	}
-
-	return  se,nil	
-
-
-	
  }
 
 func (s *service) Delete(ctx context.Context, id int) error {
 	
-	return s.repo.Delete(ctx,id)
-
+	return s.repo.Delete(ctx, id)
 	
 }
-// func (s *service) Exists(ctx context.Context, cid int) bool {
-// 	existe := s.repo.Exists(ctx, cid)
 
-// 	return existe
-// }
+func (s *service) Exists(ctx context.Context, cid int) bool {
+	return s.repo.Exists(ctx, cid)
+}

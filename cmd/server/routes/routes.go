@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"Sellers/internal/seller"
 	"Sellers/cmd/server/handler"
+	"Sellers/internal/locality"
 )
 
 type Router interface {
@@ -26,6 +27,7 @@ func (r *router) MapRoutes() {
 	r.setGroup()
 
 	r.buildSellerRoutes()
+	r.buildLocalityRoutes()
 
 }
 
@@ -38,10 +40,20 @@ func (r *router) buildSellerRoutes() {
 	repo := seller.NewRepository(r.db)
 	service := seller.NewService(repo)
 	handler := handler.NewSeller(service)
-	r.r.GET("/seller", handler.GetAll())
-	r.r.GET("/seller/:id", handler.Get())
-	r.r.POST("/seller/create", handler.Create())
-	r.r.DELETE("/seller/:id", handler.Delete())
-	r.r.PATCH("/seller/:id", handler.Update())
+	r.r.GET("/sellers", handler.GetAll())
+	r.r.GET("/sellers/:id", handler.Get())
+	r.r.POST("/sellers", handler.Create())
+	r.r.DELETE("/sellers/:id", handler.Delete())
+	r.r.PATCH("/sellers/:id", handler.Update())
+}
+
+func (r *router) buildLocalityRoutes() {
+	// Example
+	repo := locality.NewRepository(r.db)
+	service := locality.NewService(repo)
+	handler := handler.NewLocality(service)
+	r.r.POST("/localities", handler.Create())
+	r.r.GET("/localities", handler.Get())
+	
 }
 

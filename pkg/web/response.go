@@ -2,7 +2,9 @@ package web
 
 import (
 	"fmt"
+	"bytes"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"strconv"
 	"github.com/gin-gonic/gin"
@@ -51,5 +53,12 @@ func NewResponse(code int, data interface{}, error string) r {
 	}
 
 	return r{strconv.FormatInt(int64(code), 10), nil, error}
+}
+
+func CreateTestRequest(method string, url string, body string) (*http.Request, *httptest.ResponseRecorder) {
+	req := httptest.NewRequest(method, url, bytes.NewBuffer([]byte(body)))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("token", "1234")
+	return req, httptest.NewRecorder()
 }
 
