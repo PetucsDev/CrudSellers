@@ -7,7 +7,8 @@ import (
 	//"fmt"
 	//"strconv"
 	"github.com/gin-gonic/gin"
-	//"net/http"
+	"net/http"
+	"context"
 )
 
 
@@ -79,12 +80,49 @@ func (s *Locality) Create() gin.HandlerFunc {
 func (s *Locality) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
-	
+
 		if token != tokenC {
 			c.JSON(401, web.NewResponse(401, nil, "Token inválido"))
 			return
 		}
 
+		
+		zipCode := c.Request.URL.Query().Get("zip_code")
+		
+		if zipCode == "" {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.NewResponse(http.StatusBadRequest, nil, "Parametro 'zip_code' vacío"))
+			return
+		}
+
+		l, err := s.service.GetByZipCode(context.Background(), zipCode)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, web.NewResponse(http.StatusInternalServerError, nil, ""))
+			return
+		}
+
+		if l.ID == 0 {
+			c.AbortWithStatusJSON(http.StatusNotFound, web.NewResponse(http.StatusNotFound, nil, ""))
+			return
+		}
+
+		type LocalityData struct {
+			ZipCode      string `json:"zip_code"`
+			LocalityName string `json:"locality_name"`
+			SellerCounts int    `json:"sellers_count"`
+		}
+
+		var data LocalityData
+		sellers, err := s.service.GetSellers(context.Background(), l)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, web.NewResponse(http.StatusInternalServerError, nil, ""))
+			return
+		}
+
+		data.LocalityName = l.LocalityName
+		data.ZipCode = l.ZipCode
+		data.SellerCounts = len(sellers)
+
+		c.JSON(http.StatusOK, web.NewResponse(http.StatusOK, data, ""))
 	}
 }
 

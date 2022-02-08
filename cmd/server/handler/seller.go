@@ -133,6 +133,10 @@ func (s *Seller) Create() gin.HandlerFunc {
 			c.JSON(422, web.NewResponse(422, nil, "El telefono es requerido"))
 			return
 		}
+		if req.LocalitiesId == 0 {
+			c.JSON(422, web.NewResponse(422, nil, "El localitiesId es requerido"))
+			return
+		}
 
 		p, err := s.service.Save(c.Request.Context(), req)
 		if err != nil {

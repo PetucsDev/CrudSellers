@@ -53,7 +53,7 @@ func (r *router) buildLocalityRoutes() {
 	service := locality.NewService(repo)
 	handler := handler.NewLocality(service)
 	r.r.POST("/localities", handler.Create())
-	r.r.GET("/localities", handler.Get())
+	r.r.GET("/localities/reportSellers", handler.Get())
 	
 }
 
