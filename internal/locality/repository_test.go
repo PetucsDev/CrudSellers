@@ -7,6 +7,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
+	"errors"
 )
 
 
@@ -45,40 +46,49 @@ func TestCreateOk( t *testing.T){
 
 func TestCreateConflict(t *testing.T){
 
-localityToSave := domain.Locality{
 
-		
-		ZipCode: "6700",
+	localityToSave := domain.Locality{
+		ZipCode:      "6700",
 		LocalityName: "Lujan",
 		ProvinceName: "Buenos Aires",
-		CountryName: "Argentina",
-
+		CountryName:  "Argentina",
 	}
 
 	db, mock, sqlMockErr := sqlmock.New()
 	assert.Nil(t, sqlMockErr)
 	defer db.Close()
+
 	mock.
-	ExpectPrepare("INSERT INTO localities").
-	ExpectExec().
-	WithArgs(localityToSave.ZipCode, localityToSave.LocalityName, localityToSave.ProvinceName, localityToSave.CountryName).
-	WillReturnResult(sqlmock.NewResult(1,1)).
-	WillReturnError(sqlMockErr)
+		ExpectPrepare("INSERT INTO localities").
+		ExpectExec().
+		WithArgs(localityToSave.ZipCode, localityToSave.LocalityName, localityToSave.ProvinceName, localityToSave.CountryName).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	localityRepository := NewRepository(db)
 
-	localityCompare := domain.Locality{
-		ZipCode: "6700",
-		LocalityName: "Lujan",
-		ProvinceName: "Buenos Aires",
-		CountryName: "Argentina",
-	}
 	ctx := context.Background()
-	actualId, err := localityRepository.Save(ctx, localityCompare)
-	//exists := localityRepository.Exists(ctx,"6700")
+	actualId, err := localityRepository.Save(ctx, localityToSave)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, actualId)
-	assert.Equal(t,localityToSave.ZipCode, localityCompare.ZipCode)
+
+	localityCompare := domain.Locality{
+		ZipCode:      "6700",
+		LocalityName: "Lujan",
+		ProvinceName: "Buenos Aires",
+		CountryName:  "Argentina",
+	}
+
+	mock.
+		ExpectPrepare("INSERT INTO localities").
+		ExpectExec().
+		WithArgs(localityToSave.ZipCode, localityCompare.LocalityName, localityCompare.ProvinceName, localityCompare.CountryName).
+		WillReturnError(errors.New("zipCode duplicated"))
+
+	ctx = context.Background()
+	actualId, err = localityRepository.Save(ctx, localityCompare)
+	assert.NotNil(t, err)
+	assert.Equal(t, 0, actualId)
+	assert.Equal(t, localityToSave.ZipCode, localityCompare.ZipCode)
 	assert.NoError(t, mock.ExpectationsWereMet())
 
 }
