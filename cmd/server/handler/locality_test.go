@@ -111,6 +111,64 @@ func TestCreateLocalityFail(t *testing.T) {
 }
 
 
+func TestCreateLocalityFailLocalityName(t *testing.T) {
+	s := new(ServiceMock)
+	s.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s.On("Save", mock.Anything, mock.Anything).Return(1, nil)
+	service := locality.NewService(s)
+	w := NewLocality(service)
+	r := createServerLocalities(w)
+	body := `
+		{
+			"zip_code": "6700",
+  			"province_name": "Buenos Aires",
+  			"country_name": "Argentina"
+		}`
+	req, res := createRequestTestLocalities(http.MethodPost, `/api/v1/localities/`, body)
+	r.ServeHTTP(res, req)
+	assert.Equal(t, 422, res.Code, res.Result())
+	
+}
+
+
+func TestCreateLocalityFailProvinceName(t *testing.T) {
+	s := new(ServiceMock)
+	s.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s.On("Save", mock.Anything, mock.Anything).Return(1, nil)
+	service := locality.NewService(s)
+	w := NewLocality(service)
+	r := createServerLocalities(w)
+	body := `
+		{
+			"zip_code": "6700",
+			"locality_name": "Lujan",
+  			"country_name": "Argentina"
+		}`
+	req, res := createRequestTestLocalities(http.MethodPost, `/api/v1/localities/`, body)
+	r.ServeHTTP(res, req)
+	assert.Equal(t, 422, res.Code, res.Result())
+	
+}
+
+func TestCreateLocalityFailCoutryName(t *testing.T) {
+	s := new(ServiceMock)
+	s.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s.On("Save", mock.Anything, mock.Anything).Return(1, nil)
+	service := locality.NewService(s)
+	w := NewLocality(service)
+	r := createServerLocalities(w)
+	body := `
+		{
+			"zip_code": "6700",
+			"locality_name": "Lujan",
+			"province_name": "Buenos Aires"
+		}`
+	req, res := createRequestTestLocalities(http.MethodPost, `/api/v1/localities/`, body)
+	r.ServeHTTP(res, req)
+	assert.Equal(t, 422, res.Code, res.Result())
+	
+}
+
 func TestCreateLocalityConflict(t *testing.T) {
 	s := new(ServiceMock)
 	s.On("Exists", mock.Anything, mock.Anything).Return(true)
@@ -129,4 +187,6 @@ func TestCreateLocalityConflict(t *testing.T) {
 	r.ServeHTTP(res, req)
 	assert.Equal(t, http.StatusConflict, res.Code)
 }
+
+
 

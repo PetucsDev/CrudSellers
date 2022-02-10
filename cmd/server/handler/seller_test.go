@@ -68,7 +68,6 @@ func createServer(s *Seller) *gin.Engine {
 func createRequestTest(method string, url string, body string) (*http.Request, *httptest.ResponseRecorder) {
 	req := httptest.NewRequest(method, url, bytes.NewBuffer([]byte(body)))
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("token", "1234")
 	return req, httptest.NewRecorder()
 }
 
@@ -83,7 +82,8 @@ func TestCreateSellerOK(t *testing.T) {
 		"cid": 1,
 		"address": "Bulnes 10",
 		"telephone": "123456",
-		"company_name": "Meli"
+		"company_name": "Meli",
+		"localities_id":1
 	}`
 
 
@@ -113,13 +113,97 @@ func TestCreateSellerFail(t *testing.T) {
 			
 			"company_name": "Pedidos Ya",
 			"address": "Av Aconquija 1100",
-			"telephone": "987654"
+			"telephone": "987654",
+			"localities_id":1
 		}`
 	req, res := createRequestTest(http.MethodPost, `/api/v1/sellers/`, body)
 	r.ServeHTTP(res, req)
 	assert.Equal(t, 422, res.Code, res.Result())
 	
 
+}
+func TestCreateSellerFailCompanyName(t *testing.T) {
+	s := new(ServiceM)
+	s.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s.On("Save", mock.Anything, mock.Anything).Return(1, nil)
+	service := seller.NewService(s)
+	w := NewSeller(service)
+	r := createServer(w)
+	body := `
+		{
+			"cid": 1,
+			"address": "Av Aconquija 1100",
+			"telephone": "987654",
+			"localities_id":1
+		}`
+	req, res := createRequestTest(http.MethodPost, `/api/v1/sellers/`, body)
+	r.ServeHTTP(res, req)
+	assert.Equal(t, 422, res.Code, res.Result())
+	
+
+}
+
+func TestCreateSellerFailAddress(t *testing.T) {
+	s := new(ServiceM)
+	s.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s.On("Save", mock.Anything, mock.Anything).Return(1, nil)
+	service := seller.NewService(s)
+	w := NewSeller(service)
+	r := createServer(w)
+	body := `
+		{
+			"cid": 1,
+			"company_name": "Pedidos Ya",
+			"telephone": "987654",
+			"localities_id":1
+		}`
+	req, res := createRequestTest(http.MethodPost, `/api/v1/sellers/`, body)
+	r.ServeHTTP(res, req)
+	assert.Equal(t, 422, res.Code, res.Result())
+	
+
+}
+
+
+func TestCreateSellerFailTelephone(t *testing.T) {
+	s := new(ServiceM)
+	s.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s.On("Save", mock.Anything, mock.Anything).Return(1, nil)
+	service := seller.NewService(s)
+	w := NewSeller(service)
+	r := createServer(w)
+	body := `
+		{
+			"cid": 1,
+			"company_name": "Pedidos Ya",
+			"address": "Av Aconquija 1100",
+			"localities_id":1
+		}`
+	req, res := createRequestTest(http.MethodPost, `/api/v1/sellers/`, body)
+	r.ServeHTTP(res, req)
+	assert.Equal(t, 422, res.Code, res.Result())
+	
+}
+
+func TestCreateSellerFailLocalities(t *testing.T) {
+	s := new(ServiceM)
+	s.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s.On("Save", mock.Anything, mock.Anything).Return(1, nil)
+	service := seller.NewService(s)
+	w := NewSeller(service)
+	r := createServer(w)
+	body := `
+		{
+			"cid": 1,
+			"company_name": "Pedidos Ya",
+			"address": "Av Aconquija 1100",
+			"telephone": "987654"
+			
+		}`
+	req, res := createRequestTest(http.MethodPost, `/api/v1/sellers/`, body)
+	r.ServeHTTP(res, req)
+	assert.Equal(t, 422, res.Code, res.Result())
+	
 }
 
 
@@ -136,7 +220,8 @@ func TestCreateSellerConflict(t *testing.T) {
 			"cid": 1,
 			"company_name": "Demo",
 			"address": "Bulnes 10",
-			"telephone": "123456"
+			"telephone": "123456",
+			"localities_id":1
 		}`
 	req, res := createRequestTest(http.MethodPost, "/api/v1/sellers/", body)
 	r.ServeHTTP(res, req)
@@ -155,6 +240,7 @@ func TestFindAllSellers(t *testing.T) {
 		CompanyName: 		"Meli",
 		Address:            "Bulnes 10",
 		Telephone:          "123456",
+		LocalitiesId:        1,
 		
 	})
 	mockResponse = append(mockResponse, domain.Seller{
@@ -163,6 +249,7 @@ func TestFindAllSellers(t *testing.T) {
 			CompanyName: "Baires Dev",
 			Address: " Av Belgrano 1200",
 			Telephone: "4833269",
+			LocalitiesId:       2,
 	})
 	s := new(ServiceM)
 	s.On("GetAll", mock.Anything, mock.Anything).Return(mockResponse, nil)
@@ -175,6 +262,36 @@ func TestFindAllSellers(t *testing.T) {
 	assert.Equal(t, 200, res.Code)
 
 }
+func TestFindAllSellersFailService(t *testing.T) {
+
+	
+	s := new(ServiceM)
+	s.On("GetAll", mock.Anything, mock.Anything).Return([]domain.Seller{}, ErrNotFound)
+	service := seller.NewService(s)
+	w := NewSeller(service)
+	r := createServer(w)
+	req, res := createRequestTest(http.MethodGet, "/api/v1/sellers/", "")
+	r.ServeHTTP(res, req)
+
+	assert.Equal(t, 400, res.Code)
+
+}
+
+func TestFindAllSellersFailService2(t *testing.T) {
+
+	s := new(ServiceM)
+	s.On("GetAll", mock.Anything, mock.Anything).Return([]domain.Seller{}, nil)
+	service := seller.NewService(s)
+	w := NewSeller(service)
+	r := createServer(w)
+	req, res := createRequestTest(http.MethodGet, "/api/v1/sellers/", "")
+	r.ServeHTTP(res, req)
+
+	assert.Equal(t, 404, res.Code)
+
+}
+
+
 
 
 
@@ -202,9 +319,10 @@ func TestFindSellerByIdExistent(t *testing.T) {
 		CompanyName: 		"Meli",
 		Address:            "Bulnes 10",
 		Telephone:          "123456",
+		LocalitiesId: 		1,
 	}
 
-	expectedResponse := `{"id":1,"cid":1,"company_name":"Meli","address":"Bulnes 10","telephone":"123456"}`
+	expectedResponse := `{"id":1,"cid":1,"company_name":"Meli","address":"Bulnes 10","telephone":"123456","localities_id":1}`
 	s := new(ServiceM)
 	s.On("Get", mock.Anything, mock.Anything).Return(mockResponse, nil)
 	service := seller.NewService(s)

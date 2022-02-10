@@ -196,3 +196,12 @@ func TestDeleteFail(t *testing.T){
 	assert.Error(t, err)
 
 }
+
+func TestExist(t *testing.T){
+	repo := new(repoM)
+	repo.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s :=NewService(repo)
+	ctx := context.Background()
+	err := s.Exists(ctx, 1)
+	assert.Equal(t,false, err)
+}

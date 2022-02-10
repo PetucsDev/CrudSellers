@@ -16,7 +16,7 @@ type Locality struct {
 	service locality.Service
 }
 
-const tokenC string = "1234"
+
 
 func NewLocality( p locality.Service) *Locality{
 	return &Locality{
@@ -27,12 +27,7 @@ func NewLocality( p locality.Service) *Locality{
 
 func (s *Locality) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-
-		if token != tokenC {
-			c.JSON(401, web.NewResponse(401, nil, "Token inválido"))
-			return
-		}
+	
 
 		var req domain.Locality
 
@@ -79,14 +74,8 @@ func (s *Locality) Create() gin.HandlerFunc {
 
 func (s *Locality) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-
-		if token != tokenC {
-			c.JSON(401, web.NewResponse(401, nil, "Token inválido"))
-			return
-		}
-
-		
+	
+	
 		zipCode := c.Request.URL.Query().Get("zip_code")
 		
 		if zipCode == "" {

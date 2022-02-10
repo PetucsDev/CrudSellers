@@ -11,7 +11,6 @@ var (
 )
 
 type Service interface {
-	GetAll(ctx context.Context) ([]domain.Locality, error)
 	GetByZipCode(ctx context.Context, zipCode string) (domain.Locality, error)
 	GetSellers(ctx context.Context, l domain.Locality) ([]domain.Seller, error)
 	Save(ctx context.Context, lo domain.Locality) (domain.Locality, error)
@@ -24,15 +23,6 @@ type service struct {
 
 func NewService(l Repository) Service {
 	return &service{repo: l}
-}
-
-func (l *service) GetAll(ctx context.Context) ([]domain.Locality, error) {
-	ls, err := l.repo.GetAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return ls, nil
 }
 
 func (l *service) Save(ctx context.Context, lo domain.Locality) (domain.Locality, error) {

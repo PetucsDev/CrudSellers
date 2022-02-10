@@ -8,7 +8,7 @@ import (
 
 type Repository interface {
 	Save(ctx context.Context, l domain.Locality) (int, error)
-	GetAll(ctx context.Context) ([]domain.Locality, error)
+	//GetAll(ctx context.Context) ([]domain.Locality, error)
 	GetByZipCode(ctx context.Context, zipCode string) (domain.Locality, error)
 	GetSellers(ctx context.Context, l domain.Locality) ([]domain.Seller, error)
 	Exists(ctx context.Context, id string) bool
@@ -24,23 +24,6 @@ func NewRepository(db *sql.DB) Repository {
 	}
 }
 
-func (r *repository) GetAll(ctx context.Context) ([]domain.Locality, error) {
-	query := "SELECT * FROM localities"
-	rows, err := r.db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-
-	var localities []domain.Locality
-
-	for rows.Next() {
-		s := domain.Locality{}
-		_ = rows.Scan(&s.ID, s.ZipCode, &s.LocalityName, &s.ProvinceName, &s.CountryName)
-		localities = append(localities, s)
-	}
-
-	return localities, nil
-}
 
 func (r *repository) GetByZipCode(ctx context.Context, zipCode string) (domain.Locality, error) {
 	 query := "SELECT * FROM localities WHERE zip_code=?"

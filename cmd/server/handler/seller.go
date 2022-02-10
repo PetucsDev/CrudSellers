@@ -10,13 +10,7 @@ import (
 	"net/http"
 )
 
-// type request struct{
-// 	ID      int `json:"id"`
-// 	CID     int `json:"cid"`
-// 	CompanyName string `json:"company_name"`
-// 	Address string `json:"address"`
-// 	Telephone string `json:"telephone"`
-// }
+
 
 type Seller struct {
 	// sellerService seller.Service
@@ -24,7 +18,7 @@ type Seller struct {
 	service seller.Service
 }
 
-const tokenCompare string = "1234"
+
 
 
 func NewSeller(p seller.Service) *Seller {
@@ -38,13 +32,7 @@ func NewSeller(p seller.Service) *Seller {
 
 func (s *Seller) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-	
-
-		if token != tokenCompare {
-			c.JSON(401, web.NewResponse(401, nil, "Token inválido"))
-			return
-		}
+		
 
 
 		id, err := strconv.ParseInt(c.Param("id"),10, 64)
@@ -69,12 +57,7 @@ func (s *Seller) Get() gin.HandlerFunc {
 
 func (s *Seller) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-
-		if token != tokenCompare {
-			c.JSON(401, web.NewResponse(401, nil, "Token inválido"))
-			return
-		}
+	
 
 		p, err := s.service.GetAll(c.Request.Context())
 		if err != nil {
@@ -95,12 +78,6 @@ func (s *Seller) GetAll() gin.HandlerFunc {
 
 func (s *Seller) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-
-		if token != tokenCompare {
-			c.JSON(401, web.NewResponse(401, nil, "Token inválido"))
-			return
-		}
 
 		var req domain.Seller
 
@@ -150,12 +127,6 @@ func (s *Seller) Create() gin.HandlerFunc {
 
 func (s *Seller) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		token := c.Request.Header.Get("token")
-		if token != tokenCompare {
-			c.JSON(401, gin.H{ "error": "token inválido" })
-			return
-		}
 		
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
@@ -210,12 +181,7 @@ func updateSellerFields(lastSeller domain.Seller, newSeller domain.Seller, id in
 
 func (s *Seller) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header.Get("token")
-		if token != tokenCompare {	
-			c.JSON(401, gin.H{ "error": "token inválido" })
-			return
-		}
-
+	
 		id, err := strconv.ParseInt(c.Param("id"),10, 64)
 		if err != nil {
 			web.Error(c, http.StatusBadRequest, "%s", "El id ingresado no es valido")

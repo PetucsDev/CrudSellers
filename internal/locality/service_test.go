@@ -67,6 +67,19 @@ func TestCreateLocalitiesOK(t *testing.T) {
 }
 
 
+func TestCreateLocalitiesConflict(t *testing.T){
+	repo := new(repoM)
+	repo.On("Exists", mock.Anything, mock.Anything).Return(true)
+	repo.On("Save", mock.Anything, mock.Anything).Return(domain.Locality{}, ErrNotFound) 
+	serviceT := NewService(repo)
+	ctx := context.Background()
+	result := serviceT.Exists(ctx, domain.Locality{}.ZipCode)
+	assert.True(t, result)
+
+
+}
+
+
 func TestGetByZipCodeOk(t *testing.T){
 
 	repo := new(repoM)
@@ -187,4 +200,11 @@ func TestGetSellersFail(t *testing.T){
 
 }
 
-
+func TestExist(t *testing.T){
+	repo := new(repoM)
+	repo.On("Exists", mock.Anything, mock.Anything).Return(false)
+	s :=NewService(repo)
+	ctx := context.Background()
+	err := s.Exists(ctx, "4000")
+	assert.Equal(t,false, err)
+}
