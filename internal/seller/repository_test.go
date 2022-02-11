@@ -102,88 +102,156 @@ func TestCreateConflict(t *testing.T){
 
 }
 
+func TestGetAllSellersOk(t *testing.T) {
+	db, mock, sqlMockErr := sqlmock.New()
+	assert.Nil(t, sqlMockErr)
+	defer db.Close()
 
-// func TestGetAllSellersOk(t *testing.T){
-// 	sellerToSave := []domain.Seller{
+	columns := []string{"id", "cid", "company_name", "address", "telephone", "localities_id"}
+	rows := sqlmock.NewRows(columns)
+	rows.AddRow(1, 1, "Meli", "Bulnes 10", "123456", 1)
+	rows.AddRow(2, 2, "Baires Dev", "Belgrano 3200", "3814471789", 2)
 
-		
-// 		{ 
-// 			ID:                 1,
-// 			CID: 				1,
-// 			CompanyName: 		"Meli",
-// 			Address:            "Bulnes 10",
-// 			Telephone:          "123456",
-// 			LocalitiesId: 		1,
-// 		},
-// 		{
-// 			ID:                 2,
-// 			CID: 				2,
-// 			CompanyName: 		"Baires Dev",
-// 			Address:            "Belgrano 3200",
-// 			Telephone:          "3814471789",
-// 			LocalitiesId: 		2,
-// 		},
-// 	}
+	// TODO
+	mock.
+		ExpectQuery("SELECT \\* FROM sellers").
+		WillReturnRows(rows)
 
-// 	db, mock, sqlMockErr := sqlmock.New()
-// 	assert.Nil(t, sqlMockErr)
-// 	defer db.Close()
+	sellerRepository := NewRepository(db)
 
-// 	mock.
-// 		ExpectPrepare("SELECT * FROM sellers").
-// 		ExpectExec().
-// 		WithArgs(sellerToSave).
-// 		WillReturnResult(sqlmock.NewResult(1, 1))
+	ctx := context.Background()
+	sellers, err := sellerRepository.GetAll(ctx)
+	assert.Nil(t, err)
+	assert.Len(t, sellers, 2)
+}
 
-// 	sellerRepository := NewRepository(db)
+func TestGetSellerByIdOk(t *testing.T) {
+	expectedSeller := domain.Seller{
+		ID:           1,
+		CID:          1,
+		CompanyName:  "Meli",
+		Address:      "Bulnes 10",
+		Telephone:    "123456",
+		LocalitiesId: 1,
+	}
 
-// 	ctx := context.Background()
-// 	actualId, err := sellerRepository.GetAll(ctx)
-// 	assert.Nil(t, err)
-// 	assert.Len(t, actualId, 2)
-// }
+	db, mock, sqlMockErr := sqlmock.New()
+	assert.Nil(t, sqlMockErr)
+	defer db.Close()
 
-// func TestGetSellerByIdOk(t *testing.T){
-// 	expectedSeller := domain.Seller{
-// 			ID:                 1,
-// 			CID: 				1,
-//  			CompanyName: 		"Meli",
-//  			Address:            "Bulnes 10",
-//  			Telephone:          "123456",
-//  			LocalitiesId: 		1,
-// 	}
+	columns := []string{"id", "cid", "company_name", "address", "telephone", "localities_id"}
+	rows := sqlmock.NewRows(columns)
 
-// 	db, mock, sqlMockErr := sqlmock.New()
-// 	assert.Nil(t, sqlMockErr)
-// 	defer db.Close()
+	sellerId := 1
+	rows.AddRow(sellerId, 1, "Meli", "Bulnes 10", "123456", 1)
+	mock.
+		ExpectQuery("SELECT \\* FROM sellers WHERE id=\\?;").
+		WithArgs(1).
+		WillReturnRows(rows)
 
-// 	columns := []string{"id","cid","company_name","address","telephone","localities_id"}
-// 	rows := sqlmock.NewRows(columns)
+	sellerRepository := NewRepository(db)
 
-// 	sellerId := 1
-// 	rows.AddRow(sellerId,1,"Meli","Bulnes 10","123456",1)
-// 	mock.
-// 	ExpectPrepare("SELECT * FROM sellers WHERE id=?;").
-// 	ExpectQuery().
-// 	WithArgs(6).
-// 	WillReturnRows(rows)
+	actualResult, err := sellerRepository.Get(context.Background(), 1)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, actualResult)
+	assert.Equal(t, expectedSeller, actualResult)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestDoesExists(t *testing.T) {
+	db, mock, sqlMockErr := sqlmock.New()
+	assert.Nil(t, sqlMockErr)
+	defer db.Close()
+
+	columns := []string{"cid"}
+	rows := sqlmock.NewRows(columns)
+
+	sellerID := 1
+	rows.AddRow(sellerID)
+	mock.
+		ExpectQuery("SELECT cid FROM sellers WHERE cid=\\?;").
+		WithArgs(sellerID).
+		WillReturnRows(rows)
+
+	sellerRepository := NewRepository(db)
+
+	doesExist := sellerRepository.Exists(context.Background(), sellerID)
+	assert.True(t, doesExist)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestDoesntExists(t *testing.T) {
+	db, mock, sqlMockErr := sqlmock.New()
+	assert.Nil(t, sqlMockErr)
+	defer db.Close()
+
+	testID := 2
+
+	mock.
+		ExpectQuery("SELECT cid FROM sellers WHERE cid=\\?;").
+		WithArgs(testID)
+
+	sellerRepository := NewRepository(db)
+
+	doesExist := sellerRepository.Exists(context.Background(), testID)
+
+	assert.False(t, doesExist)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
 
 
-// 	sellerRepository := NewRepository(db)
+func TestUpdateSuccess(t *testing.T) {
+	sellerToUpdate := domain.Seller{
+		ID:           1,
+		CID:          1,
+		CompanyName:  "Meli",
+		Address:      "Bulnes 10",
+		Telephone:    "123456",
+		LocalitiesId: 1,
+	}
 
-// 	actualResult, err := sellerRepository.Get(context.Background(), 1)
+	db, mock, sqlMockErr := sqlmock.New()
+	assert.Nil(t, sqlMockErr)
+	defer db.Close()
+	mock.
+		ExpectPrepare("UPDATE sellers SET cid=\\?, company_name=\\?, address=\\?, telephone=\\? WHERE id=\\?").
+		ExpectExec().
+		WithArgs(sellerToUpdate.CID, sellerToUpdate.CompanyName, sellerToUpdate.Address, sellerToUpdate.Telephone, sellerToUpdate.ID).
+		WillReturnResult(sqlmock.NewResult(1, 1)).
+		WillReturnError(nil)
 
-// 	actualResult1 := domain.Seller{
-// 			ID:                 1,
-// 			CID: 				1,
-//  			CompanyName: 		"Meli",
-//  			Address:            "Bulnes 10",
-//  			Telephone:          "123456",
-//  			LocalitiesId: 		1,
-// 	}
-// 	fmt.Println(actualResult)
-// 	assert.Nil(t, err)
-// 	assert.NotNil(t, actualResult1)
-// 	assert.Equal(t, expectedSeller, actualResult1)
-// 	assert.NoError(t, mock.ExpectationsWereMet())
-// }
+	sellerRepository := NewRepository(db)
+
+	err := sellerRepository.Update(context.Background(), sellerToUpdate)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestDeleteSuccess(t *testing.T) {
+	sellerToDelete := domain.Seller{
+		ID:           1,
+		CID:          1,
+		CompanyName:  "Meli",
+		Address:      "Bulnes 10",
+		Telephone:    "123456",
+		LocalitiesId: 1,
+	}
+
+	db, mock, sqlMockErr := sqlmock.New()
+	assert.Nil(t, sqlMockErr)
+	defer db.Close()
+	mock.
+		ExpectPrepare("DELETE FROM sellers WHERE id=\\?").
+		ExpectExec().
+		WithArgs(sellerToDelete.ID).
+		WillReturnResult(sqlmock.NewResult(1, 1)).
+		WillReturnError(nil)
+
+	sellerRepository := NewRepository(db)
+
+	err := sellerRepository.Delete(context.Background(), 1)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
